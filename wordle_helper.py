@@ -34,7 +34,7 @@ def filter_wordlist(wordlist, *conditions) -> list[str]:
     """
     return [i.strip() for i in wordlist if all([condition(i) for condition in conditions])]
 
-def create_rules_from_known_location_str(known_str: str, unknown_char = '_') -> list[typing.Callable]:
+def create_rules_from_greens(known_str: str, unknown_char ='_') -> list[typing.Callable]:
     """
     Takes in a string where every unknown letter is '_' and every known letter (green) is in the position.
 
@@ -57,7 +57,7 @@ def create_rules_from_known_location_str(known_str: str, unknown_char = '_') -> 
             rules.append(rule)
     return rules
 
-def create_rules_from_unknowns(characters: str) -> list[typing.Callable]:
+def create_rules_from_known_letter_unknown_position(characters: str) -> list[typing.Callable]:
     """
     Takes in a string of every known letter but with unknown position (yellow).
 
@@ -74,14 +74,27 @@ def create_rules_from_unknowns(characters: str) -> list[typing.Callable]:
         rules.append(lambda x, character=character: character in x)
     return rules
 
-def create_rules_yellow_positions(characters: str, unknown_char ='_') -> list[typing.Callable]:
+def create_rules_yellows(characters: str, unknown_char ='_') -> list[typing.Callable]:
+    """
+    Given a list of in yellow positions, provides a list of rules that remove a yellow character from its position,
+    and then finds the words that have yellow characters in other positions.
+
+    Example - Possibilities for the word 'slate':
+        - 'ate__' has the first three letters in yellow
+        - 's_a_e' has the letters 's', 'a', 'e' in green
+        - '_____' if no known letters
+
+    :param characters: In the same form as create_rules_from_greens
+    :param unknown_char: The character to indicate where it's gray
+    :return: list of functions
+    """
     rules = []
     for i, character in enumerate(characters):
         if character == unknown_char:
             continue
         rule = lambda x, character=character, i=i: x[i] != character
         rules.append(rule)
-    rules.extend(create_rules_from_unknowns(characters.replace(unknown_char, '')))
+    rules.extend(create_rules_from_known_letter_unknown_position(characters.replace(unknown_char, '')))
     return rules
 
 @click.command()
@@ -97,10 +110,10 @@ def main(known: str, unknown: str, wordlist: str, yellows: str):
     elif (wordlist == 'termo') or (wordlist == 'termooo'):
         words = load_termo_wordlist()
 
-    known_rules = create_rules_from_known_location_str(known)
-    unknown_rules = create_rules_from_unknowns(unknown)
-    yellow_rules = create_rules_yellow_positions(yellows)
-    all_rules = known_rules+unknown_rules+yellow_rules
+    green_rules = create_rules_from_greens(known)
+    known_letter_rules = create_rules_from_known_letter_unknown_position(unknown)
+    yellow_rules = create_rules_yellows(yellows)
+    all_rules = green_rules+known_letter_rules+yellow_rules
     if len(all_rules) == 0:
         choice = input('Warning, no rules passed. Print entire wordlist? [n]/y:')
         if choice == 'y':
