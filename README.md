@@ -10,7 +10,7 @@ Small CLI to help one cheat at wordle and termo
 Word 1:
 
 1. Current guess: SLATE ⬜⬜🟨🟨🟨
-2. Run `python wordle_helper.py --yellows __ate
+2. Run `python wordle_helper.py --yellows __ate`
 3. Prints a list of possible words. Find a proper one.
 
 ```
@@ -20,7 +20,7 @@ Word 1:
 Word 2:
 
 1. Current guess: CADET 🟩🟩⬜🟩🟨
-2. Run `python wordle_helper.py --yellows ____t --known ca_e_
+2. Run `python wordle_helper.py --yellows ____t --known ca_e_`
 3. Prints a list of possible words. Find a proper one.
 
 ```
