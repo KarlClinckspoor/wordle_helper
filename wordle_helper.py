@@ -1,3 +1,6 @@
+import \
+    os.path
+
 import unidecode
 import click
 import typing
@@ -75,12 +78,26 @@ def create_rules_from_known_letter_unknown_position(
         - '' if no yellow letters
 
     :param characters:
-    :return:
+    :return: list of functions with the restrictions
     """
     rules = []
     for character in characters:
         # Need to keep variables within lambda scope only
         rules.append(lambda x, character=character: character in x)
+    return rules
+
+
+def create_rules_from_black_letters(characters: str,) -> list[typing.Callable]:
+    """
+    Takes in a string of every black letter.
+
+    :param characters: Characters to remove
+    :return: list of functions with the restrictions
+    """
+    rules = []
+    for character in characters:
+        # Need to keep variables within lambda scope only
+        rules.append(lambda x, character=character: character not in x)
     return rules
 
 
@@ -122,19 +139,40 @@ def create_rules_yellows(characters: str, unknown_char="_") -> list[typing.Calla
 @click.option(
     "--wordlist", "-w", default="wordle", help="Wordlist to use. wordle or termo"
 )
-@click.option("--yellows", "-y", default="_____", help="Yellow positions. Word=slate, yellows in ate. form=ate__")
-def main(known: str, unknown: str, wordlist: str, yellows: str):
+@click.option("--blacks", "-b", default="", help="Letters in black. form=slt")
+@click.option(
+    "--yellows",
+    "-y",
+    default="_____",
+    help="Yellow positions. Word=slate, yellows in ate. form=ate__",
+)
+@click.option('--path', '-p', default='', help='path to wordlist')
+def main(known: str, unknown: str, wordlist: str, yellows: str, blacks: str, path: str):
+
     if wordlist.lower() not in ["wordle", "termo", "termooo"]:
         raise ValueError(f"Not a valid wordlist! ({wordlist}).")
+
     if wordlist == "wordle":
-        words = load_wordle_wordlist()
+        if path:
+            if not os.path.exists(path):
+                raise NameError("Not a valid path!")
+            words = load_wordle_wordlist(path=path)
+        else:
+            words = load_wordle_wordlist()
+
     elif (wordlist == "termo") or (wordlist == "termooo"):
-        words = load_termo_wordlist()
+        if path:
+            if not os.path.exists(path):
+                raise NameError("Not a valid path!")
+            words = load_termo_wordlist(path=path)
+        else:
+            words = load_termo_wordlist()
 
     green_rules = create_rules_from_greens(known)
     known_letter_rules = create_rules_from_known_letter_unknown_position(unknown)
     yellow_rules = create_rules_yellows(yellows)
-    all_rules = green_rules + known_letter_rules + yellow_rules
+    black_rules = create_rules_from_black_letters(blacks)
+    all_rules = green_rules + known_letter_rules + yellow_rules + black_rules
     if len(all_rules) == 0:
         choice = input("Warning, no rules passed. Print entire wordlist? [n]/y:")
         if choice == "y":
