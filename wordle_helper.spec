@@ -2,12 +2,15 @@
 
 
 block_cipher = None
-
+added_files = [
+    ('wordle_list.txt','.'),
+    ('termooo_list.txt','.')
+]
 
 a = Analysis(['wordle_helper.py'],
              pathex=[],
              binaries=[],
-             datas=[('wordle_list.txt', 'termooo_list.txt')],
+             datas=added_files,
              hiddenimports=[],
              hookspath=[],
              hooksconfig={},

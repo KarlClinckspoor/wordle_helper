@@ -128,6 +128,14 @@ def create_rules_yellows(characters: str, unknown_char="_") -> list[typing.Calla
     )
     return rules
 
+import sys
+import os
+
+# From https://stackoverflow.com/questions/7674790/bundling-data-files-with-pyinstaller-onefile
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_path, relative_path)
 
 @click.command()
 @click.option(
@@ -158,7 +166,7 @@ def main(known: str, unknown: str, wordlist: str, yellows: str, blacks: str, pat
                 raise NameError("Not a valid path!")
             words = load_wordle_wordlist(path=path)
         else:
-            words = load_wordle_wordlist()
+            words = load_wordle_wordlist(path=resource_path('wordle_list.txt'))
 
     elif (wordlist == "termo") or (wordlist == "termooo"):
         if path:
@@ -166,7 +174,7 @@ def main(known: str, unknown: str, wordlist: str, yellows: str, blacks: str, pat
                 raise NameError("Not a valid path!")
             words = load_termo_wordlist(path=path)
         else:
-            words = load_termo_wordlist()
+            words = load_termo_wordlist(path=resource_path('termooo_list.txt'))
 
     green_rules = create_rules_from_greens(known)
     known_letter_rules = create_rules_from_known_letter_unknown_position(unknown)
