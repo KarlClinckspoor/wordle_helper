@@ -1,9 +1,9 @@
-import \
-    os.path
-
+import os.path
 import unidecode
 import click
 import typing
+import sys
+import os
 
 
 def load_termo_wordlist(path: str = "./termooo_list.txt") -> list[str]:
@@ -128,8 +128,37 @@ def create_rules_yellows(characters: str, unknown_char="_") -> list[typing.Calla
     )
     return rules
 
-import sys
-import os
+def suggest_words_with_remaining_letters(remaining_characters: str, wordlist, len_guesses: int = 5) -> list[str]:
+    # Try to find words with all remaining chars then n-1 then n-2.
+    # All
+    # rules = create_rules_from_known_letter_unknown_position(remaining_characters)
+    # n-1 guesses
+    # for i in range(len_guesses):
+    #     rules += create_rules_from_known_letter_unknown_position(remaining_characters[:i] + remaining_characters[i+1:])
+    #
+    # # n-2 guesses
+    # for i in range(len_guesses):
+    #     for j in range(len_guesses):
+    #         if i == j:
+    #             continue
+    #         if j < i:
+    #             continue
+    #         templist = list(remaining_characters)
+    #         templist.remove(remaining_characters[i])
+    #         templist.remove(remaining_characters[j])
+    #         templist = str(templist)
+    #         rules += create_rules_from_known_letter_unknown_position(templist)
+    #
+    # suggestions = filter_wordlist(wordlist, *rules)
+    words_with_all = []
+    set_chars = set(remaining_characters)
+    for word in wordlist:
+        set_word = set(word.strip())
+        if set_word.issubset(set_chars):
+            words_with_all.append(word.strip())
+    # set_wordlist = set(wordlist)
+    # words_with_all = set_wordlist.issubset(set_chars)
+    return list(words_with_all)
 
 # From https://stackoverflow.com/questions/7674790/bundling-data-files-with-pyinstaller-onefile
 def resource_path(relative_path):
@@ -155,7 +184,8 @@ def resource_path(relative_path):
     help="Yellow positions. Word=slate, yellows in ate. form=ate__",
 )
 @click.option('--path', '-p', default='', help='path to wordlist')
-def main(known: str, unknown: str, wordlist: str, yellows: str, blacks: str, path: str):
+@click.option('--suggest', '-s', is_flag=True, help='Suggest some words to clear out letters')
+def main(known: str, unknown: str, wordlist: str, yellows: str, blacks: str, path: str, suggest: bool):
 
     if wordlist.lower() not in ["wordle", "termo", "termooo"]:
         raise ValueError(f"Not a valid wordlist! ({wordlist}).")
@@ -187,6 +217,25 @@ def main(known: str, unknown: str, wordlist: str, yellows: str, blacks: str, pat
             print(words)
         return
     print(filter_wordlist(words, *all_rules))
+
+    if suggest:
+        remaining_letters1 = ''.join(set('abcdefghijklmnopqrstuvwxyz').difference(set(blacks)))
+        remaining_letters2 = (''.join(
+            set('abcdefghijklmnopqrstuvwxyz')
+            .difference(set(blacks))
+            .difference(set(yellows.replace('_', '')))
+            )
+        )
+        remaining_letters3 = (''.join(
+            set('abcdefghijklmnopqrstuvwxyz')
+                .difference(set(blacks))
+                .difference(set(yellows.replace('_', '')))
+                .difference(set(known.replace('_', '')))
+            )
+        )
+        print('Suggestions to clear the most letters (only bl)\n', suggest_words_with_remaining_letters(remaining_letters1, words))
+        print('Suggestions to clear the most letters (bl+yl)\n', suggest_words_with_remaining_letters(remaining_letters2, words))
+        print('Suggestions to clear the most letters (bl+yl+gr)\n', suggest_words_with_remaining_letters(remaining_letters3, words))
 
 
 if __name__ == "__main__":
